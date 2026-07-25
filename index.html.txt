@@ -1,0 +1,171 @@
+﻿/**
+ * CampusLost - Core Logic
+ */
+
+// --- Mock Data ---
+const lostItems = [
+    { id: 1, name: "HP Laptop", category: "Electronics", date: "2024-03-20", location: "Library", student: "Rahul S", contact: "9876543210", status: "Lost", img: "https://images.unsplash.com/photo-1517336712468-4514f8803a64?w=400" },
+    { id: 2, name: "College ID Card", category: "ID Cards", date: "2024-03-19", location: "Cafeteria", student: "Sneha P", contact: "9876543211", status: "Lost", img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400" },
+    { id: 3, name: "Blue Water Bottle", category: "Others", date: "2024-03-18", location: "Gym", student: "Arjun M", contact: "9876543212", status: "Lost", img: "https://images.unsplash.com/photo-1602143393494-710f816346b1?w=400" }
+];
+
+const foundItems = [
+    { id: 101, name: "Keys with Keychain", category: "Others", date: "2024-03-21", location: "Main Gate", finder: "Security Guard", contact: "Office", status: "Found", img: "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400" }
+];
+
+// --- Navigation Engine ---
+function navigateTo(sectionId) {
+    // Scroll to top
+    window.scrollTo(0, 0);
+
+    // Update Active Section
+    document.querySelectorAll('.page-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById(sectionId).classList.add('active');
+
+    // Close Mobile Menu if open
+    document.getElementById('nav-links').classList.remove('active');
+
+    // Special initialization for items
+    if (sectionId === 'lost-items') renderItems('lost-items-container', lostItems, 'lost');
+    if (sectionId === 'found-items') renderItems('found-items-container', foundItems, 'found');
+    if (sectionId === 'home') startStatsCounter();
+}
+
+// --- Render Items Function ---
+function renderItems(containerId, data, type) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = data.map(item => `
+        <div class="item-card fade-in">
+            <img src="${item.img}" alt="${item.name}" class="item-img">
+            <div class="item-info">
+                <span class="badge ${type === 'lost' ? 'badge-lost' : 'badge-found'}">${item.status}</span>
+                <h3 style="margin: 10px 0">${item.name}</h3>
+                <p><i class="fas fa-list"></i> ${item.category}</p>
+                <p><i class="fas fa-calendar"></i> ${item.date}</p>
+                <p><i class="fas fa-map-marker-alt"></i> ${item.location}</p>
+                <p><i class="fas fa-user"></i> ${type === 'lost' ? item.student : item.finder}</p>
+                <button class="btn-submit" style="margin-top:15px; padding: 10px;" onclick="showContact('${item.contact}')">
+                    Contact to Claim
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// --- Stats Counter ---
+function startStatsCounter() {
+    const counters = document.querySelectorAll('.counter');
+    counters.forEach(counter => {
+        counter.innerText = '0';
+        const updateCounter = () => {
+            const target = +counter.getAttribute('data-target');
+            const c = +counter.innerText;
+            const increment = target / 100;
+            if (c < target) {
+                counter.innerText = `${Math.ceil(c + increment)}`;
+                setTimeout(updateCounter, 10);
+            } else {
+                counter.innerText = target;
+            }
+        };
+        updateCounter();
+    });
+}
+
+// --- Forms Logic ---
+document.getElementById('lost-report-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    showToast("Success! Lost item reported. Our matching system is scanning...", "success");
+    
+    // Simulate Match System
+    setTimeout(() => {
+        showToast("Possible Match Found in Found Items!", "info");
+    }, 3000);
+});
+
+// --- Theme Toggle ---
+const themeBtn = document.getElementById('theme-toggle');
+themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-theme');
+    const icon = themeBtn.querySelector('i');
+    icon.className = document.body.classList.contains('dark-theme') ? 'fas fa-sun' : 'fas fa-moon';
+});
+
+// --- Image Preview ---
+function setupImagePreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    input.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" style="width:100%; height:150px; object-fit:cover; border-radius:10px; margin-top:10px;">`;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+}
+setupImagePreview('lost-img-input', 'lost-img-preview');
+setupImagePreview('found-img-input', 'found-img-preview');
+
+// --- Helpers ---
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+function showContact(info) {
+    alert("Please contact the office or use this detail: " + info);
+}
+
+// --- Initialize ---
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        document.getElementById('loader').style.display = 'none';
+        startStatsCounter();
+    }, 1000);
+});
+
+// --- Scroll Logic ---
+window.onscroll = function() {
+    const scrollBtn = document.getElementById("scroll-top");
+    if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+        scrollBtn.style.display = "block";
+    } else {
+        scrollBtn.style.display = "none";
+    }
+};
+
+document.getElementById("scroll-top").onclick = () => window.scrollTo(0, 0);
+
+// --- Simple Filter Logic ---
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const filter = this.getAttribute('data-filter');
+        const filtered = filter === 'all' ? lostItems : lostItems.filter(i => i.category === filter);
+        renderItems('lost-items-container', filtered, 'lost');
+    });
+});
+
+// --- Mock Login ---
+document.getElementById('login-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    showToast("Logged in successfully!", "success");
+    document.getElementById('auth-buttons').style.display = 'none';
+    document.getElementById('user-profile-nav').style.display = 'block';
+    navigateTo('student-dashboard');
+});
+
+function handleLogout() {
+    location.reload();
+}
